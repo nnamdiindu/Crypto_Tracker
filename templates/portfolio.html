@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Crypto Tracker{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>CryptoTracker Pro</h1>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Market Cap</div>
+                    <div class="stat-value">${{ "{:,.2f}".format(market_data.data.total_market_cap.usd) }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">24h Volume</div>
+                    <div class="stat-value">${{ "{:,.2f}".format(market_data.data.total_volume.usd) }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">BTC Dominance</div>
+                    <div class="stat-value">{{ "{:.2f}%".format(market_data.data.market_cap_percentage.btc) }}</div>
+                </div>
+                <a href="/" class="refresh-btn">
+                    🔄 Refresh
+                </a>
+            </div>
+        </div>
+
+        <!-- Market Overview Cards -->
+        <div class="market-overview">
+            <div class="market-card">
+                <h3>Active Cryptocurrencies</h3>
+                <div class="value">{{ market_data.data.active_cryptocurrencies }}</div>
+                <div class="sub-text">Tracked coins</div>
+            </div>
+            <div class="market-card">
+                <h3>Total Exchanges</h3>
+                <div class="value">{{ market_data.data.markets }}</div>
+                <div class="sub-text">Active exchanges</div>
+            </div>
+            <div class="market-card">
+                <h3>Market Cap Change</h3>
+                <div class="value {{ 'positive' if market_data.data.market_cap_change_percentage_24h_usd >= 0 else 'negative' }}">
+                    {{ '+' if market_data.data.market_cap_change_percentage_24h_usd >= 0 else '' }}{{ market_data.data.market_cap_change_percentage_24h_usd | round(2) }}
+                </div>
+                <div class="sub-text">Last 24 hours</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Crypto List -->
+            <div class="card">
+                <h2>
+                    <span class="icon">📈</span>
+                    Top Cryptocurrencies
+                </h2>
+                <div class="crypto-list">
+                    <!-- Crypto Item  -->
+                     {% for crypto in crypto_data %}
+                    <div class="crypto-item">
+                        <div class="crypto-info">
+                            <div class="crypto-icon"><img class="crypto-icon" src="{{ crypto.image }}"></div>
+                            <div class="crypto-details">
+                                <h3>{{ crypto.name }}</h3>
+                                <div class="crypto-symbol">{{ crypto.symbol.upper() }}</div>
+                            </div>
+                        </div>
+                        <div class="crypto-price">
+                            <div class="price">${{ "{:,.2f}".format(crypto.current_price) }}</div>
+                            <div class="change {{ 'positive' if crypto.price_change_percentage_24h >= 0 else 'negative' }}">
+                                {{ '+' if crypto.price_change_percentage_24h >= 0 else '' }}{{ crypto.price_change_percentage_24h }}%
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Portfolio -->
+            <div class="card">
+                <h2>
+                    <span class="icon">💼</span>
+                    My Portfolio
+                </h2>
+                <div class="portfolio-summary">
+                    <div class="portfolio-value">$24,567.89</div>
+                    <div class="portfolio-change positive">+$1,234.56 (+5.29%)</div>
+                    {#<!-- Template: 
+                    <div class="portfolio-value">${{ portfolio.total_value_formatted }}</div>
+                    <div class="portfolio-change {{ 'positive' if portfolio.change_24h >= 0 else 'negative' }}">
+                        {{ '+' if portfolio.change_24h >= 0 else '' }}${{ portfolio.change_amount_formatted }} 
+                        ({{ '+' if portfolio.change_percentage >= 0 else '' }}{{ portfolio.change_percentage }}%)
+                    </div>
+                -->#}
+                </div>
+                <div class="portfolio-items">
+                    <!-- Portfolio Item 1 -->
+                    <div class="portfolio-item">
+                        <div class="portfolio-left">
+                            <div class="small-icon">₿</div>
+                            <span>Bitcoin</span>
+                        </div>
+                        <div>$18,450.00</div>
+                    </div>
+                    {#<!-- Template:
+                    {% for holding in portfolio.holdings %}
+                    <div class="portfolio-item">
+                        <div class="portfolio-left">
+                            <div class="small-icon">{{ holding.icon }}</div>
+                            <span>{{ holding.name }}</span>
+                        </div>
+                        <div>${{ holding.value_formatted }}</div>
+                    </div>
+                    {% endfor %}
+                    -->#}
+
+                    <!-- Portfolio Item 2 -->
+                    <div class="portfolio-item">
+                        <div class="portfolio-left">
+                            <div class="small-icon">Ξ</div>
+                            <span>Ethereum</span>
+                        </div>
+                        <div>$4,230.50</div>
+                    </div>
+
+                    <!-- Portfolio Item 3 -->
+                    <div class="portfolio-item">
+                        <div class="portfolio-left">
+                            <div class="small-icon">A</div>
+                            <span>Cardano</span>
+                        </div>
+                        <div>$1,887.39</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="card">
+                <h2>
+                    <span class="icon">📊</span>
+                    Price Chart - Bitcoin 24h
+                </h2>
+                <div class="chart-placeholder">
+                    <div class="chart-text">
+                        📈 Chart will be implemented here<br>
+                        <small>Current: $67,850.23 | High: $68,200 | Low: $66,900</small>
+                    </div>
+                    <!-- Template: You can integrate Chart.js or use server-side chart generation -->
+                    <!-- Or use a simple SVG/Canvas implementation -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>
+                    <span class="icon">📰</span>
+                    Crypto News
+                </h2>
+                <div class="news-section">
+                    <!-- News Item  -->
+                     {% for article in news_articles %}
+                    <div class="news-item">
+                        <a href="{{ article.url }}" class="text-decoration-none text-light" target="_blank" rel="noopener noreferrer">
+                            <div class="news-title">{{ article.title }}</div>
+                            <div class="news-time">{{ article.publishedAt }}</div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                                  
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

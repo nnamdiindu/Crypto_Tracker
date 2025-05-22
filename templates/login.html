@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "bootstrap5/form.html" import render_form %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Login</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      {% for message in messages %}
+      <p class="flash text-danger">{{ message }}</p>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+    {{ render_form(form, novalidate=True) }}
+</div>
+{% endblock %}
