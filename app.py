@@ -1,4 +1,6 @@
 import os
+from typing import List
+
 import requests
 from datetime import timedelta
 from datetime import datetime, timezone
@@ -7,8 +9,8 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_login import UserMixin, current_user, login_user, logout_user, login_required, LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import Integer, String, ForeignKey, DateTime, Float
 from flask_bootstrap import Bootstrap5
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import LoginForm, RegisterForm
@@ -38,6 +40,19 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(120), nullable=False)
+    coins: Mapped[List["Portfolio"]] = relationship("Portfolio", back_populates="user")
+
+
+class Portfolio(db.Model):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    coin_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    price_at_add: Mapped[float] = mapped_column(Float, nullable=False)
+    added_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    # Foreign key to link to the User table
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
+    # Define the relationship from the portfolio back to the user
+    user: Mapped["User"] = relationship("User", back_populates="coins")
 
 
 with app.app_context():
