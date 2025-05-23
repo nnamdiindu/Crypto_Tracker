@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import timedelta
 from datetime import datetime, timezone
 from dateutil import parser
 from dotenv import load_dotenv
@@ -125,9 +125,7 @@ def get_bitcoin_chart_data(days=7):
     }
 
 
-
-@app.route("/", methods=["GET", "POST"])
-def dashboard():
+def get_top_cryptocurrencies():
     # Top 10 Coins API Call
     url = "https://api.coingecko.com/api/v3/coins/markets"
     params = {
@@ -139,14 +137,23 @@ def dashboard():
     }
     response = requests.get(url, params)
     crypto_data = response.json()
+    return crypto_data
 
 
+def get_market_data():
     # Global Market Data API Call
     url = "https://api.coingecko.com/api/v3/global"
-    headers = {"accept": "application/json","x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")}
+
+    headers = {
+        "accept": "application/json",
+        "x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")
+    }
     response = requests.get(url, headers=headers)
     market_data = response.json()
+    return market_data
 
+
+def get_market_news():
     # Crypto News API Call
     end_date = datetime.today().date()
     start_date = end_date - timedelta(days=7)
@@ -163,6 +170,18 @@ def dashboard():
 
     response = requests.get('https://newsapi.org/v2/everything', params=params)
     news_articles = response.json()["articles"]
+
+    return news_articles
+
+
+@app.route("/", methods=["GET", "POST"])
+def dashboard():
+
+    crypto_data = get_top_cryptocurrencies()
+
+    market_data = get_market_data()
+
+    news_articles = get_market_news()
 
     chart_data = get_bitcoin_chart_data(days=30)
 
@@ -219,6 +238,7 @@ def login():
             return redirect(url_for("register"))
 
     return render_template("login.html", form=form, current_user=current_user)
+
 
 @app.route("/logout")
 @login_required
