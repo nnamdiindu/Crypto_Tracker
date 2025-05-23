@@ -92,6 +92,40 @@ def time_ago(timestamp_str):
 app.jinja_env.filters['timeago'] = time_ago
 
 
+def get_bitcoin_chart_data(days=7):
+    url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+    params = {
+        'vs_currency': 'usd',
+        'days': days,
+        'interval': 'daily' if days > 1 else 'hourly'
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    # Extract and format data
+    labels = []
+    prices = []
+
+    for timestamp, price in data['prices']:
+        dt = datetime.fromtimestamp(timestamp / 1000)
+
+        # Format label based on time period
+        if days == 1:
+            label = dt.strftime('%H:%M')
+        else:
+            label = dt.strftime('%m/%d')
+
+        labels.append(label)
+        prices.append(round(price, 2))
+
+    return {
+        'labels': labels,
+        'data': prices
+    }
+
+
+
 @app.route("/", methods=["GET", "POST"])
 def dashboard():
     # Top 10 Coins API Call
@@ -130,8 +164,9 @@ def dashboard():
     response = requests.get('https://newsapi.org/v2/everything', params=params)
     news_articles = response.json()["articles"]
 
+    chart_data = get_bitcoin_chart_data(days=30)
 
-    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data, news_articles=news_articles, current_user=current_user)
+    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data, news_articles=news_articles, chart_data=chart_data, current_user=current_user)
 
 
 @app.route("/register", methods=["GET", "POST"])

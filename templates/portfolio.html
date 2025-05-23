@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Crypto Tracker{% endblock %}
 {% block content %}
+
     <div class="container">
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
@@ -167,7 +168,7 @@
                 </h2>
                 <div class="chart-placeholder">
                     <div class="chart-text">
-                        <!-- Chart comes here -->
+                          <canvas id="myChart" width="700" height="300"></canvas>
                     </div>
                     <!-- Template: You can integrate Chart.js or use server-side chart generation -->
                     <!-- Or use a simple SVG/Canvas implementation -->
@@ -194,5 +195,30 @@
             </div>
         </div>
     </div>
+<script>
+    const ctx = document.getElementById('myChart');
+    const chartData = {
+        labels: {{ chart_data.labels|tojson }},
+        data: {{ chart_data.data|tojson }}
+    };
 
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Bitcoin Price Chart',
+                data: chartData.data,
+                borderWidth: 1
+            }]
+        },
+        options: {
+        scales: {
+            y: {
+            beginAtZero: true
+            }
+        }
+        }
+    });
+</script>
 {% endblock %}
