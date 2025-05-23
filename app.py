@@ -1,6 +1,8 @@
 import os
 import requests
 from datetime import datetime, timedelta
+from datetime import datetime, timezone
+from dateutil import parser
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_login import UserMixin, current_user, login_user, logout_user, login_required, LoginManager
@@ -63,11 +65,73 @@ def format_number(num):
 app.jinja_env.filters['compact'] = format_number
 
 
-@app.route("/")
-def home():
+# Format Time Function
+def time_ago(timestamp_str):
+    try:
+        timestamp = parser.isoparse(timestamp_str)
+        now = datetime.now(timezone.utc)
+        diff = now - timestamp
+
+        seconds = diff.total_seconds()
+        minutes = seconds / 60
+        hours = minutes / 60
+        days = hours / 24
+
+        if seconds < 60:
+            return f"{int(seconds)} seconds ago"
+        elif minutes < 60:
+            return f"{int(minutes)} minutes ago"
+        elif hours < 24:
+            return f"{int(hours)} hours ago"
+        else:
+            return f"{int(days)} days ago"
+    except Exception as e:
+        return "Invalid date"
+
+# Register the filter with Jinja
+app.jinja_env.filters['timeago'] = time_ago
 
 
-    return render_template("index.html", current_user=current_user)
+@app.route("/", methods=["GET", "POST"])
+def dashboard():
+    # Top 10 Coins API Call
+    url = "https://api.coingecko.com/api/v3/coins/markets"
+    params = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 10,
+        "page": 1,
+        "sparkline": False
+    }
+    response = requests.get(url, params)
+    crypto_data = response.json()
+
+
+    # Global Market Data API Call
+    url = "https://api.coingecko.com/api/v3/global"
+    headers = {"accept": "application/json","x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")}
+    response = requests.get(url, headers=headers)
+    market_data = response.json()
+
+    # Crypto News API Call
+    end_date = datetime.today().date()
+    start_date = end_date - timedelta(days=7)
+
+    params = {
+        "q": 'cryptocurrency OR bitcoin OR ethereum OR "crypto market"',
+        "from": start_date,
+        "to": end_date,
+        "sortBy": "popularity",
+        "language": "en",
+        "pageSize": 10,  # Max articles per request
+        "apiKey": os.environ.get("NEWS_API_KEY")
+    }
+
+    response = requests.get('https://newsapi.org/v2/everything', params=params)
+    news_articles = response.json()["articles"]
+
+
+    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data, news_articles=news_articles, current_user=current_user)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -125,51 +189,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("login"))
-
-
-@app.route("/dashboard", methods=["GET", "POST"])
-@login_required
-def dashboard():
-    # Top 10 Coins API Call
-    url = "https://api.coingecko.com/api/v3/coins/markets"
-    params = {
-        "vs_currency": "usd",
-        "order": "market_cap_desc",
-        "per_page": 10,
-        "page": 1,
-        "sparkline": False
-    }
-    response = requests.get(url, params)
-    crypto_data = response.json()
-
-
-    # Global Market Data API Call
-    url = "https://api.coingecko.com/api/v3/global"
-    headers = {"accept": "application/json","x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")}
-    response = requests.get(url, headers=headers)
-    market_data = response.json()
-
-    # Crypto News API Call
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=7)
-
-    params = {
-        "q": 'cryptocurrency OR bitcoin OR ethereum OR "crypto market"',
-        "from": start_date,
-        "to": end_date,
-        "sortBy": "popularity",
-        "language": "en",
-        "pageSize": 10,  # Max articles per request
-        "apiKey": os.environ.get("NEWS_API_KEY")
-    }
-
-    response = requests.get('https://newsapi.org/v2/everything', params=params)
-    news_articles = response.json()["articles"]
-
-
-    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data, news_articles=news_articles, current_user=current_user)
-
+    return redirect(url_for("dashboard"))
 
 
 if __name__ == "__main__":
