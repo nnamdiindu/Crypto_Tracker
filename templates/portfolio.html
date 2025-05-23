@@ -9,19 +9,18 @@
             <div class="header-stats">
                 <div class="stat-item">
                     <div class="stat-label">Market Cap</div>
-                    <div class="stat-value">${{ "{:,.2f}".format(market_data.data.total_market_cap.usd) }}</div>
+                    <div class="stat-value">${{ market_data.data.total_market_cap.usd | compact }}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">24h Volume</div>
-                    <div class="stat-value">${{ "{:,.2f}".format(market_data.data.total_volume.usd) }}</div>
+                    <div class="stat-value">${{ market_data.data.total_volume.usd | compact }}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">BTC Dominance</div>
                     <div class="stat-value">{{ "{:.2f}%".format(market_data.data.market_cap_percentage.btc) }}</div>
                 </div>
-                <a href="/" class="refresh-btn">
-                    🔄 Refresh
-                </a>
+                <a href="{{ url_for('logout') }}"><button class="btn btn-lg btn-warning">Logout</button></a>
+                
             </div>
         </div>
 

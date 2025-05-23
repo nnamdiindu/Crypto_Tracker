@@ -42,6 +42,27 @@ with app.app_context():
     db.create_all()
 
 
+# Custom formatter
+def format_number(num):
+    try:
+        num = float(num)
+        if num >= 1_000_000_000_000:
+            return f"{num/1_000_000_000_000:.1f}T"
+        elif num >= 1_000_000_000:
+            return f"{num/1_000_000_000:.1f}B"
+        elif num >= 1_000_000:
+            return f"{num/1_000_000:.1f}M"
+        elif num >= 1_000:
+            return f"{num/1_000:.1f}K"
+        else:
+            return f"{num:.2f}"
+    except:
+        return num  # fallback for non-numeric input
+
+# Register it as a Jinja filter
+app.jinja_env.filters['compact'] = format_number
+
+
 @app.route("/")
 def home():
 
@@ -105,6 +126,7 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
 
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
