@@ -102,6 +102,7 @@
 
             <!-- Portfolio -->
             <div class="card">
+                {% if current_user.is_authenticated %}
                 <h2>
                     <span class="icon">💼</span>
                     My Portfolio
@@ -109,6 +110,7 @@
                 <div class="portfolio-summary">
                     <div class="portfolio-value">$24,567.89</div>
                     <div class="portfolio-change positive">+$1,234.56 (+5.29%)</div>
+                    
                     {#<!-- Template: 
                     <div class="portfolio-value">${{ portfolio.total_value_formatted }}</div>
                     <div class="portfolio-change {{ 'positive' if portfolio.change_24h >= 0 else 'negative' }}">
@@ -119,47 +121,43 @@
                 </div>
                 <div class="portfolio-items">
                     <!-- Portfolio Item 1 -->
+                     {% for holding in portfolio_holdings %}
                     <div class="portfolio-item">
                         <div class="portfolio-left">
-                            <div class="small-icon">₿</div>
-                            <span>Bitcoin</span>
+                            <div class="small-icon"><img class="small-icon" src="{{ holding.coin_img_url }}" alt="{{ holding.coin_id }}" srcset=""></div>
+                            <span>{{ holding.coin_id }}</span>
                         </div>
-                        <div>$18,450.00</div>
-                    </div>
-                    {#<!-- Template:
-                    {% for holding in portfolio.holdings %}
-                    <div class="portfolio-item">
-                        <div class="portfolio-left">
-                            <div class="small-icon">{{ holding.icon }}</div>
-                            <span>{{ holding.name }}</span>
-                        </div>
-                        <div>${{ holding.value_formatted }}</div>
+                        <div>${{ "{:,.2f}".format(holding.price_at_add) }}</div>
                     </div>
                     {% endfor %}
-                    -->#}
-
-                    <!-- Portfolio Item 2 -->
-                    <div class="portfolio-item">
-                        <div class="portfolio-left">
-                            <div class="small-icon">Ξ</div>
-                            <span>Ethereum</span>
-                        </div>
-                        <div>$4,230.50</div>
+                    <button class="btn btn-lg btn-warning mt-3"><a href="{{ url_for('buy_coin') }}" class="text-decoration-none">Buy Coin</a></button>
+                    {% else %}
+                    <h2>
+                        <span class="icon">💼</span>
+                        Get Started
+                    </h2>
+                    <div class="portfolio-summary">
+                        <div class="portfolio-value">Start Your Portfolio</div>
+                        <div class="portfolio-change positive">Never miss a market move again</div>
                     </div>
-
-                    <!-- Portfolio Item 3 -->
-                    <div class="portfolio-item">
-                        <div class="portfolio-left">
-                            <div class="small-icon">A</div>
-                            <span>Cardano</span>
-                        </div>
-                        <div>$1,887.39</div>
+                    <ul>
+                        <li>Track unlimited coins</li>
+                        <li>Real-time price alerts</li>
+                        <li>Portfolio analytics</li>
+                    </ul>    
+                    <button class="btn btn-lg btn-warning mt-3">Register</button>
+                    <div>
+                        <p class="text-center mt-2">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
                     </div>
                 </div>
+                {% endif %}
+
             </div>
         </div>
+    </div>
 
-        <!-- Charts Section -->
+    <!-- Charts Section -->
+    <div class="container">
         <div class="charts-section">
             <div class="card">
                 <h2>
@@ -187,12 +185,14 @@
                             <div class="news-time">{{ article.publishedAt | timeago }}</div>
                         </a>
                     </div>
-                    {% endfor %}
-                                  
+                    {% endfor %}           
                 </div>
-            </div>
+            </div> 
         </div>
+
     </div>
+           
+    
 <script>
     const ctx = document.getElementById('myChart');
     const chartData = {

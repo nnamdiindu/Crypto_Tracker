@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "bootstrap5/form.html" import render_form %}
+{% block title %}Buy Coin{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Buy Coin</h1>
+    {{ render_form(form, novalidate=True) }}
+</div>
+{% endblock %}

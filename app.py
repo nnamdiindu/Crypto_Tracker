@@ -1,6 +1,5 @@
 import os
 from typing import List
-
 import requests
 from datetime import timedelta
 from datetime import datetime, timezone
@@ -13,7 +12,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Float
 from flask_bootstrap import Bootstrap5
 from werkzeug.security import generate_password_hash, check_password_hash
-from forms import LoginForm, RegisterForm
+from forms import LoginForm, RegisterForm, BuyCoin
 
 load_dotenv()
 app = Flask(__name__)
@@ -48,7 +47,8 @@ class Portfolio(db.Model):
     coin_id: Mapped[str] = mapped_column(String(50), nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     price_at_add: Mapped[float] = mapped_column(Float, nullable=False)
-    added_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    added_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    coin_img_url: Mapped[str] = mapped_column(String(1000))
     # Foreign key to link to the User table
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
     # Define the relationship from the portfolio back to the user
@@ -154,6 +154,32 @@ def get_top_cryptocurrencies():
     crypto_data = response.json()
     return crypto_data
 
+def get_coin_price(coin):
+    url = f"https://api.coingecko.com/api/v3/coins/{coin}"
+
+    headers = {
+        "accept": "application/json",
+        "x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")
+    }
+
+    response = requests.get(url, headers=headers)
+
+    response = response.json()
+    return response["market_data"]["current_price"]["usd"]
+
+
+def get_coin_img_url(coin):
+    url = f"https://api.coingecko.com/api/v3/coins/{coin}"
+
+    headers = {
+        "accept": "application/json",
+        "x-cg-demo-api-key": os.environ.get("COINGECKO_API_KEY")
+    }
+
+    response = requests.get(url, headers=headers)
+
+    response = response.json()
+    return response["image"]["small"]
 
 def get_market_data():
     # Global Market Data API Call
@@ -188,6 +214,9 @@ def get_market_news():
 
     return news_articles
 
+def get_user_portfolio():
+    portfolio_holdings = db.session.execute(db.select(Portfolio)).scalars().all()
+    return portfolio_holdings
 
 @app.route("/", methods=["GET", "POST"])
 def dashboard():
@@ -200,8 +229,31 @@ def dashboard():
 
     chart_data = get_bitcoin_chart_data(days=30)
 
-    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data, news_articles=news_articles, chart_data=chart_data, current_user=current_user)
+    portfolio_holdings = get_user_portfolio()
 
+    return render_template("portfolio.html", crypto_data=crypto_data, market_data=market_data,
+                           news_articles=news_articles, chart_data=chart_data, portfolio_holdings=portfolio_holdings,
+                           current_user=current_user)
+
+@app.route("/buy-coin", methods=["GET", "POST"])
+def buy_coin():
+    form = BuyCoin()
+    if form.validate_on_submit():
+        coin_id = form.name.data
+        price = get_coin_price(coin_id)
+        coin_img_url = get_coin_img_url(coin_id)
+        amount = float(form.amount.data/price)
+        new_coin = Portfolio(
+            coin_id=coin_id,
+            amount = amount,
+            price_at_add = price,
+            coin_img_url = coin_img_url,
+            user_id = current_user.id,
+        )
+        db.session.add(new_coin)
+        db.session.commit()
+        get_user_portfolio()
+    return render_template("buy_coin.html", form=form)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
